@@ -12,10 +12,52 @@ pub struct YieldCurve {
 }
 
 impl YieldCurve {
-    pub fn new(inputRates : Vec<(Date<Utc>, f64)> ) -> YieldCurve {
+    pub fn new(input_dates : Vec<(Date<Utc>, f64)> ) -> YieldCurve {
         YieldCurve {
-            rates : inputRates
+            rates : input_dates
         }
+    }
+}
+
+pub struct YieldCurveFactory {
+}
+impl YieldCurveFactory {
+    pub fn create_flat_curve(rate : f64) -> YieldCurve {
+        let today = Utc::now().date();
+        let input_rates = vec![ 
+            (today.checked_add_signed(Duration::days(1)).unwrap(), rate),
+            (today.checked_add_signed(Duration::days(30 * 1)).unwrap(), rate),
+            (today.checked_add_signed(Duration::days(30 * 3)).unwrap(), rate),
+            (today.checked_add_signed(Duration::days(30 * 6)).unwrap(), rate),
+            (today.checked_add_signed(Duration::days(30 * 9)).unwrap(), rate),
+            (today.checked_add_signed(Duration::days(365 * 1)).unwrap(), rate),
+            (today.checked_add_signed(Duration::days(365 * 2)).unwrap(), rate),
+            (today.checked_add_signed(Duration::days(365 * 3)).unwrap(), rate),
+            (today.checked_add_signed(Duration::days(365 * 4)).unwrap(), rate),
+            (today.checked_add_signed(Duration::days(365 * 6)).unwrap(), rate),
+            (today.checked_add_signed(Duration::days(365 * 8)).unwrap(), rate),
+            (today.checked_add_signed(Duration::days(365 * 10)).unwrap(), rate)
+        ];
+        YieldCurve::new(input_rates)
+    }
+
+    pub fn create_default_curve() -> YieldCurve {
+        let today = Utc::now().date();
+        let input_rates = vec![ 
+            (today.checked_add_signed(Duration::days(1)).unwrap(), 0.2),
+            (today.checked_add_signed(Duration::days(30 * 1)).unwrap(), 0.4),
+            (today.checked_add_signed(Duration::days(30 * 3)).unwrap(), 0.6),
+            (today.checked_add_signed(Duration::days(30 * 6)).unwrap(), 0.8),
+            (today.checked_add_signed(Duration::days(30 * 9)).unwrap(), 0.9),
+            (today.checked_add_signed(Duration::days(365 * 1)).unwrap(), 1.3),
+            (today.checked_add_signed(Duration::days(365 * 2)).unwrap(), 1.9),
+            (today.checked_add_signed(Duration::days(365 * 3)).unwrap(), 2.6),
+            (today.checked_add_signed(Duration::days(365 * 4)).unwrap(), 3.4),
+            (today.checked_add_signed(Duration::days(365 * 6)).unwrap(), 4.0),
+            (today.checked_add_signed(Duration::days(365 * 8)).unwrap(), 4.8),
+            (today.checked_add_signed(Duration::days(365 * 10)).unwrap(), 5.8)
+        ];
+        YieldCurve::new(input_rates)
     }
 }
 
@@ -41,23 +83,7 @@ mod tests {
         
         //let chrono::Utc.ymd(2021, 3, 1)
         let today = Utc::now().date();
-
-        let inputRates = vec![ 
-            (today.checked_add_signed(Duration::days(1)).unwrap(), 0.2),
-            (today.checked_add_signed(Duration::days(30 * 1)).unwrap(), 0.4),
-            (today.checked_add_signed(Duration::days(30 * 3)).unwrap(), 0.6),
-            (today.checked_add_signed(Duration::days(30 * 6)).unwrap(), 0.8),
-            (today.checked_add_signed(Duration::days(30 * 9)).unwrap(), 0.9),
-            (today.checked_add_signed(Duration::days(365 * 1)).unwrap(), 1.3),
-            (today.checked_add_signed(Duration::days(365 * 2)).unwrap(), 1.9),
-            (today.checked_add_signed(Duration::days(365 * 3)).unwrap(), 2.6),
-            (today.checked_add_signed(Duration::days(365 * 4)).unwrap(), 3.4),
-            (today.checked_add_signed(Duration::days(365 * 6)).unwrap(), 4.0),
-            (today.checked_add_signed(Duration::days(365 * 8)).unwrap(), 4.8),
-            (today.checked_add_signed(Duration::days(365 * 10)).unwrap(), 5.8)
-        ];
-
-        let base = YieldCurve::new(inputRates);
+        let base = YieldCurveFactory::create_default_curve();
 
         let res = base.queryRate(today);
         println!("Res 1!!! {}", res);

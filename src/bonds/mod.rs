@@ -1,9 +1,11 @@
 // mod equations;
 extern crate chrono;
-use chrono::{DateTime, Duration, Utc, TimeZone};
+use chrono::{Date, Duration, Utc, TimeZone};
 use crate::equations::{df};
 use crate::dates::{calc_payment_dates, days_accrued, year_fract_to_date};
-use crate::rates::{YieldCurve, HasQueryRate};
+use crate::rates::{YieldCurve, YieldCurveFactory, HasQueryRate};
+
+pub mod analytics;
 
 trait HasPrice {
     fn price(&self) -> f64;
@@ -45,7 +47,7 @@ impl HasAI for GenericBond {
         let last_cpn_dt = chrono::Utc.ymd(2021, 2, 1);
         let mat_dt = chrono::Utc.ymd(2021 + self.maturity as i32 - 1, 2, 1);
         
-        let pay_dates = calc_payment_dates(val_dt, last_cpn_dt, mat_dt, self.p as u32) ; //HACK
+        let pay_dates = calc_payment_dates(val_dt, Some(last_cpn_dt), mat_dt, self.p as u32) ; //HACK
         let days = days_accrued(val_dt, &pay_dates, self.bdc);
         
         (days as f64/self.bdc.1) * self.coupon
@@ -56,27 +58,10 @@ impl HasAI for GenericBond {
 // This looks quite OO
 impl HasYieldCurve for GenericBond{
     fn yc(&self) -> YieldCurve {
-        let today = Utc::now().date();
-
-        let inputRates = vec![ 
-            (today.checked_add_signed(Duration::days(1)).unwrap(), 0.2),
-            (today.checked_add_signed(Duration::days(30 * 1)).unwrap(), 0.4),
-            (today.checked_add_signed(Duration::days(30 * 3)).unwrap(), 0.6),
-            (today.checked_add_signed(Duration::days(30 * 6)).unwrap(), 0.8),
-            (today.checked_add_signed(Duration::days(30 * 9)).unwrap(), 0.9),
-            (today.checked_add_signed(Duration::days(365 * 1)).unwrap(), 1.3),
-            (today.checked_add_signed(Duration::days(365 * 2)).unwrap(), 1.9),
-            (today.checked_add_signed(Duration::days(365 * 3)).unwrap(), 2.6),
-            (today.checked_add_signed(Duration::days(365 * 4)).unwrap(), 3.4),
-            (today.checked_add_signed(Duration::days(365 * 6)).unwrap(), 4.0),
-            (today.checked_add_signed(Duration::days(365 * 8)).unwrap(), 4.8),
-            (today.checked_add_signed(Duration::days(365 * 10)).unwrap(), 5.8)
-        ];
-        YieldCurve::new(inputRates)
+        // YieldCurveFactory::create_default_curve()
+        YieldCurveFactory::create_flat_curve(3.)
     } 
-
 }
-
 
 impl HasPV for GenericBond {
     fn pv(&self) -> f64 {
@@ -84,12 +69,13 @@ impl HasPV for GenericBond {
         let mat_dt = year_fract_to_date(val_dt, self.maturity); //Hacky maturity date for annual
         let freq = 1;
 
-        let pay_dates = calc_payment_dates(val_dt, val_dt, mat_dt, freq);
+        //Assuming start of bond life, no payment yet
+        let pay_dates = calc_payment_dates(val_dt, None, mat_dt, freq);
 
         println!("Matdate {}, Pay dates: {:?}", mat_dt, pay_dates);
 
         let mut i = 0;
-        let res : f64 = pay_dates.iter().map(|dt| {   
+        let cpn_pvs : f64 = pay_dates.iter().map(|dt| {   
                 i = i + 1;
                 let year_fract = i as f64;
                 let rate = self.yc().queryRate(*dt) / 100.; //correct scale
@@ -100,9 +86,9 @@ impl HasPV for GenericBond {
 
             }).sum();
             let final_rate = self.yc().queryRate(mat_dt) / 100.;
-            let principle_flow = 100. * df(final_rate, self.maturity);
-            println!("pf is {}", principle_flow);
-            res + principle_flow
+            let principle_pv = 100. * df(final_rate, self.maturity);
+            println!("princple PV is {}", principle_pv);
+            cpn_pvs + principle_pv
         }
     } 
 
@@ -150,9 +136,9 @@ mod tests {
         let pv = bond.pv();
         println!("PV for annual 3%, 5yr bond is {}", pv);
         
-        // let bond = GenericBond::new(3.0, 5., 2.); 
-        // let pv = bond.pv();
-        // println!("PV for semi-annual 3%, 5yr bond is {}", pv);
+        let bond = GenericBond::new(3.0, 5., 2.); 
+        let pv = bond.pv();
+        println!("PV for semi-annual 3%, 5yr bond is {}", pv);
         // assert!()
     }
 
