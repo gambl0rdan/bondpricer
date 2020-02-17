@@ -29,7 +29,6 @@ pub fn df(rate : f64, years : f64) -> f64{
 }
 
 
-
 #[cfg(test)]
 mod tests {
     use super::*;

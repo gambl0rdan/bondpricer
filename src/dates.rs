@@ -1,21 +1,34 @@
 extern crate chrono;
 use chrono::{Date, DateTime, Duration, Utc};
 
-//We would have the enture schedules as property of a bond?
-pub fn calc_payment_dates(valuation_date : Date<Utc>, last_coupon_date : Date<Utc>,  maturity_date : Date<Utc>, frequency : u32) -> Vec<Date<Utc>>{
-    let mut dates : Vec<Date<Utc>> = vec![];
-    let mut period_dt = last_coupon_date;
+fn next_coupon_date(){
 
-    let dur = match frequency{
+}
+
+//We would have the enture schedules as property of a bond?
+pub fn calc_payment_dates(valuation_date : Date<Utc>, last_coupon_date : Option<Date<Utc>>,  maturity_date : Date<Utc>, frequency : u32) -> Vec<Date<Utc>>{
+    let mut dates : Vec<Date<Utc>> = vec![];
+    let (mut period_dt, mut ignore_init_dt) : (Date<Utc>, bool) = match last_coupon_date {
+        Some(dt) => (dt, false),
+        None => (valuation_date, true)
+    };
+
+    let dur  = match frequency {
         1 => Duration::days(365),
-        2 => Duration::days(180), //Assume 30/660
-        4 => Duration::days(90), //Assume 30/660
+        2 => Duration::days(180), //Assume 30/360
+        4 => Duration::days(90), //Assume 30/360
         _ => Duration::days(365), //Need to handle better
     };
     //Assume frequency 1 | 2 | 4
     
     while period_dt <= maturity_date{
-        dates.push(period_dt);
+        //TODO: A functional way of this logic would be better...
+        if ignore_init_dt {
+            ignore_init_dt = false;
+        } else{
+            dates.push(period_dt);
+        }
+
         period_dt = period_dt.checked_add_signed(dur).unwrap();
     }
     dates
@@ -63,7 +76,7 @@ mod tests {
         let mat_dt = chrono::Utc.ymd(2024, 2, 1);
         let freq = 1;
 
-        let res = calc_payment_dates(val_dt, last_cpn_dt, mat_dt, freq);
+        let res = calc_payment_dates(val_dt, Some(last_cpn_dt), mat_dt, freq);
         println!("Res is {:?}", res);
 
     }
@@ -76,7 +89,7 @@ mod tests {
         let mat_dt = chrono::Utc.ymd(2024, 2, 1);
         let freq = 1;
         let bdc = (30., 360.);
-        let pay_dates = calc_payment_dates(val_dt, last_cpn_dt, mat_dt, freq);
+        let pay_dates = calc_payment_dates(val_dt, Some(last_cpn_dt), mat_dt, freq);
         let res = days_accrued(val_dt, &pay_dates, bdc);
 
         assert_eq!(0, res);
