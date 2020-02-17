@@ -58,8 +58,8 @@ impl HasAI for GenericBond {
 // This looks quite OO
 impl HasYieldCurve for GenericBond{
     fn yc(&self) -> YieldCurve {
-        // YieldCurveFactory::createDefaultCurve()
-        YieldCurveFactory::createFlatCurve(3.)
+        // YieldCurveFactory::create_default_curve()
+        YieldCurveFactory::create_flat_curve(3.)
     } 
 }
 

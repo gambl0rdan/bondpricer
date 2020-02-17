@@ -83,7 +83,7 @@ mod tests {
         let mat = 5.;
         let freq = 2.;
         let coupon = 3.;
-        let yc = YieldCurveFactory::createFlatCurve(3.);
+        let yc = YieldCurveFactory::create_flat_curve(3.);
     
         println!("PV for bond is {}", pv_calced(val_dt, mat, freq, coupon, &yc));
         
@@ -94,7 +94,7 @@ mod tests {
         let mat = 6.2;
         let freq = 2.;
         let coupon = 7.25;
-        let yc = YieldCurveFactory::createFlatCurve(5.94);
+        let yc = YieldCurveFactory::create_flat_curve(5.94);
 
         println!("PV for bond is {}", pv_calced(val_dt, mat, freq, coupon, &yc));
     }

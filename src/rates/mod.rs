@@ -12,9 +12,9 @@ pub struct YieldCurve {
 }
 
 impl YieldCurve {
-    pub fn new(inputRates : Vec<(Date<Utc>, f64)> ) -> YieldCurve {
+    pub fn new(input_dates : Vec<(Date<Utc>, f64)> ) -> YieldCurve {
         YieldCurve {
-            rates : inputRates
+            rates : input_dates
         }
     }
 }
@@ -22,7 +22,7 @@ impl YieldCurve {
 pub struct YieldCurveFactory {
 }
 impl YieldCurveFactory {
-    pub fn createFlatCurve(rate : f64) -> YieldCurve {
+    pub fn create_flat_curve(rate : f64) -> YieldCurve {
         let today = Utc::now().date();
         let input_rates = vec![ 
             (today.checked_add_signed(Duration::days(1)).unwrap(), rate),
@@ -41,7 +41,7 @@ impl YieldCurveFactory {
         YieldCurve::new(input_rates)
     }
 
-    pub fn createDefaultCurve() -> YieldCurve {
+    pub fn create_default_curve() -> YieldCurve {
         let today = Utc::now().date();
         let input_rates = vec![ 
             (today.checked_add_signed(Duration::days(1)).unwrap(), 0.2),
@@ -83,7 +83,7 @@ mod tests {
         
         //let chrono::Utc.ymd(2021, 3, 1)
         let today = Utc::now().date();
-        let base = YieldCurveFactory::createDefaultCurve();
+        let base = YieldCurveFactory::create_default_curve();
 
         let res = base.queryRate(today);
         println!("Res 1!!! {}", res);

@@ -1,9 +1,5 @@
 extern crate chrono;
-use chrono::{Date, DateTime, Duration, Utc};
-
-fn next_coupon_date(){
-
-}
+use chrono::{Date, Duration, Utc};
 
 //We would have the enture schedules as property of a bond?
 pub fn calc_payment_dates(valuation_date : Date<Utc>, last_coupon_date : Option<Date<Utc>>,  maturity_date : Date<Utc>, frequency : u32) -> Vec<Date<Utc>>{
