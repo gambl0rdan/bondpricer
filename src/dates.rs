@@ -30,10 +30,6 @@ pub fn calc_payment_dates(valuation_date : Date<Utc>, last_coupon_date : Option<
     dates
 }
 
-pub fn calc_year_fraction() -> f64{
-    0.
-}
-
 pub fn days_accrued(valuation_date : Date<Utc>, schedules : &Vec<Date<Utc>>, bdc : (f64, f64)) -> i64 {
     
     let broken_dt_iter = schedules.iter().rev()
@@ -57,13 +53,16 @@ pub fn year_fract_to_date(valuation_date : Date<Utc>, year_fraction : f64) -> Da
     }
 }
 
+pub fn date_to_year_fract(start_date : Date<Utc>, valuation_date :Date<Utc>) -> f64 {
+    valuation_date.signed_duration_since(start_date).num_days() as f64 / 365.  
+}
+
 
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use chrono::{DateTime, Duration, Utc, TimeZone};
-
 
     #[test]
     fn date_vec_flows(){
@@ -109,5 +108,14 @@ mod tests {
 
         let calc_settle_dt = res.unwrap();
         assert!(calc_settle_dt > val_dt);
+    }
+
+    #[test]
+    fn date_to_year_fract_correct(){
+        let start_dt = chrono::Utc.ymd(2020, 3, 1);
+        let val_dt = chrono::Utc.ymd(2020, 9, 1);
+
+        let res = date_to_year_fract(start_dt, val_dt);
+        assert!((0.5 - res).abs() < 0.01);
     }
 }
