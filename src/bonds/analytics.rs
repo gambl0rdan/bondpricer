@@ -40,13 +40,13 @@ fn ytm_and_zspread(val_dt : Date<Utc>, mat : f64, freq : f64, coupon : f64, pric
 }
 
 // Solve for yield using Newton-Raphson method
-fn  calculate_yield(init_guess : f64, cashflows : &[f64], year_fracts : &[f64], B : f64) -> f64 {
+fn  calculate_yield(init_guess : f64, cashflows : &[f64], year_fracts : &[f64], b : f64) -> f64 {
         
     let error : f64 = 0.000000001;
     let mut x_i : f64 = init_guess-1.0;
     let mut x_i_next : f64 = init_guess;
 
-    println!("Initial: PV={}, initial_guess={}, x_i={}, x_i_next={}", B, init_guess, x_i, x_i_next);
+    println!("Initial: PV={}, initial_guess={}, x_i={}, x_i_next={}", b, init_guess, x_i, x_i_next);
     while (x_i_next - x_i).abs() > error {
         x_i = x_i_next;
         let mut nums : Vec<f64> = vec![];
@@ -67,20 +67,20 @@ fn  calculate_yield(init_guess : f64, cashflows : &[f64], year_fracts : &[f64], 
 
         let numerator : f64 = nums.iter().sum();
         let denominator : f64 = denoms.iter().sum();
-        x_i_next = x_i + (numerator - B) / denominator;
-        println!("xi+1=xi+(n-B)/d === {}={}+({}-{})/{}", x_i_next, x_i, numerator, B, denominator);
+        x_i_next = x_i + (numerator - b) / denominator;
+        println!("xi+1=xi+(n-B)/d === {}={}+({}-{})/{}", x_i_next, x_i, numerator, b, denominator);
     }
     x_i_next
 }
 
 // Solve for Z-spread using Newton-Raphson method
-fn calculate_z_spread(init_guess : f64, cashflows : &[f64], pay_dates : &Vec<Date<Utc>>, year_fracts : &[f64], B : f64, yc : &YieldCurve) -> f64 {
+fn calculate_z_spread(init_guess : f64, cashflows : &[f64], pay_dates : &Vec<Date<Utc>>, year_fracts : &[f64], b : f64, yc : &YieldCurve) -> f64 {
         
     let error : f64 = 0.000000001;
     let mut x_i : f64 = init_guess-1.0;
     let mut x_i_next : f64 = init_guess;
     
-    println!("Initial: PV={}, initial_guess={}, x_i={}, x_i_next={}", B, init_guess, x_i, x_i_next);
+    println!("Initial: PV={}, initial_guess={}, x_i={}, x_i_next={}", b, init_guess, x_i, x_i_next);
     while (x_i_next - x_i).abs() > error {
         x_i = x_i_next;
         let mut nums : Vec<f64> = vec![];
@@ -91,7 +91,7 @@ fn calculate_z_spread(init_guess : f64, cashflows : &[f64], pay_dates : &Vec<Dat
             //cf, year fract
             let (cf, y) = it;
             let dt = pd_iter.next();
-            let rate = yc.queryRate(*dt.unwrap()) / 100.; //correct scale
+            let rate = yc.query_rate(*dt.unwrap()) / 100.; //correct scale
             
             let n = cf * df(x_i + rate, *y);
             let d = y * cf * df(x_i + rate, *y);
@@ -104,8 +104,8 @@ fn calculate_z_spread(init_guess : f64, cashflows : &[f64], pay_dates : &Vec<Dat
 
         let numerator : f64 = nums.iter().sum();
         let denominator : f64 = denoms.iter().sum();
-        x_i_next = x_i + (numerator - B) / denominator;
-        // println!("xi+1=xi+(n-B)/d === {}={}+({}-{})/{}", x_i_next, x_i, numerator, B, denominator);
+        x_i_next = x_i + (numerator - b) / denominator;
+        // println!("xi+1=xi+(n-B)/d === {}={}+({}-{})/{}", x_i_next, x_i, numerator, b, denominator);
     }
     x_i_next
 }
@@ -165,14 +165,14 @@ fn pv_calced(val_dt : Date<Utc>, mat : f64, freq : f64, coupon : f64, yc : &Yiel
     let cpn_pvs : f64 = pay_dates.iter().map(|dt| {   
             i = i + 1;
             let year_fract = i as f64;
-            let rate = yc.queryRate(*dt) / (100. * freq); //correct scale
+            let rate = yc.query_rate(*dt) / (100. * freq); //correct scale
             let dff = df(rate, year_fract);
             let cf = dff * coupon / freq;
             println!("Year={}, r={}, DF={} CF={}", i, rate, dff, cf);                
             cf
 
         }).sum();
-        let final_rate = yc.queryRate(mat_dt) / (100. * freq);
+        let final_rate = yc.query_rate(mat_dt) / (100. * freq);
         let principle_pv = 100. * df(final_rate, mat * freq);
         println!("Final rate is {}, princple PV is {}", final_rate, principle_pv);
         cpn_pvs + principle_pv

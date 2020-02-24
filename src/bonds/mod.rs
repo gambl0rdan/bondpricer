@@ -1,6 +1,5 @@
-// mod equations;
 extern crate chrono;
-use chrono::{Date, Duration, Utc, TimeZone};
+use chrono::{Utc, TimeZone};
 use crate::equations::{df};
 use crate::dates::{calc_payment_dates, days_accrued, year_fract_to_date};
 use crate::rates::{YieldCurve, YieldCurveFactory, HasQueryRate};
@@ -78,14 +77,14 @@ impl HasPV for GenericBond {
         let cpn_pvs : f64 = pay_dates.iter().map(|dt| {   
                 i = i + 1;
                 let year_fract = i as f64;
-                let rate = self.yc().queryRate(*dt) / 100.; //correct scale
+                let rate = self.yc().query_rate(*dt) / 100.; //correct scale
                 let dff = df(rate, year_fract);
                 let cf = dff * self.coupon / self.p;
                 println!("Year {}, DF {} CF {}", i, dff, cf);                
                 cf
 
             }).sum();
-            let final_rate = self.yc().queryRate(mat_dt) / 100.;
+            let final_rate = self.yc().query_rate(mat_dt) / 100.;
             let principle_pv = 100. * df(final_rate, self.maturity);
             println!("princple PV is {}", principle_pv);
             cpn_pvs + principle_pv
